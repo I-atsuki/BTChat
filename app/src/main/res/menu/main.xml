@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
         android:id="@+id/menu_connect"
@@ -25,5 +26,9 @@
         android:id="@+id/menu_about"
         android:orderInCategory="106"
         android:title="@string/menu_about_title"/>
-
+    <item
+        android:id="@+id/menu_oto"
+        android:orderInCategory="107"
+        android:title="@string/menu_oto_title"
+        app:showAsAction="ifRoom|withText"/>
 </menu>
