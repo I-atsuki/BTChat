@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView chatLogView;
     private EditText inputText;
     private Button sendButton;
+    private Button otoButton;
 
     private ArrayList<ChatMessage> chatLog;
     private ArrayAdapter<ChatMessage> chatLogAdapter;
@@ -91,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
     private SoundPool soundPool;
     private int sound_connected;
     private int sound_disconnected;
+    private int sound_oto;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
         connectionProgress = findViewById(R.id.connection_progress);
         inputText = findViewById(R.id.input_text);
         sendButton = findViewById(R.id.send_button);
+        otoButton = findViewById(R.id.send_oto);
         chatLogView = findViewById(R.id.chat_log_view);
         chatLogAdapter = new ArrayAdapter<ChatMessage>(this, 0, chatLog) {
             @Override
@@ -152,6 +156,8 @@ public class MainActivity extends AppCompatActivity {
         sound_connected = soundPool.load(this, R.raw.nhk_doorbell, 1);
         // https://www.nhk.or.jp/archives/creative/material/view.html?m=D0002070102_00000
         sound_disconnected = soundPool.load(this, R.raw.nhk_woodblock2, 1);
+        //
+        sound_oto = soundPool.load(this, R.raw.ahiru, 1);
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter != null)
@@ -242,6 +248,9 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
             return true;
+        case R.id.menu_oto:
+            soundPool.play(sound_oto, 1.0f, 1.0f, 0, 0, 1);
+            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
@@ -274,6 +283,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void onClickOtoButton(View v) {
+        Log.d(TAG, "onClickOtoButton");
+        if (commThread != null) {
+            String content = "1oto";
+            if (content.length() == 0) {
+                Toast.makeText(this, R.string.toast_empty_message, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            message_seq++;
+            long time = System.currentTimeMillis();
+            ChatMessage message = new ChatMessage(message_seq, time, content, devName);
+            commThread.send(message);
+            chatLogAdapter.add(message);
+            chatLogAdapter.notifyDataSetChanged();
+            chatLogView.smoothScrollToPosition(chatLog.size());
+            inputText.getEditableText().clear();
+        }
+    }
     public void onClickSendButton(View v) {
         Log.d(TAG, "onClickSendButton");
         if (commThread != null) {
@@ -572,6 +599,7 @@ public class MainActivity extends AppCompatActivity {
                     handler.sendMessage(handler.obtainMessage(MESG_RECEIVED, reader.read()));
                 }
                 reader.endArray();
+
                 if (!writerClosed) {
                     writer.endArray();
                     writer.flush();
@@ -664,27 +692,28 @@ public class MainActivity extends AppCompatActivity {
             statusText.setText(R.string.conn_status_text_disconnected);
             inputText.setEnabled(false);
             sendButton.setEnabled(false);
+            otoButton.setEnabled(false);
             break;
         case Disconnected:
             statusText.setText(R.string.conn_status_text_disconnected);
             inputText.setEnabled(false);
-            sendButton.setEnabled(false);
+            sendButton.setEnabled(false);otoButton.setEnabled(false);
             break;
         case Connecting:
             statusText.setText(getString(R.string.conn_status_text_connecting_to, arg));
             inputText.setEnabled(false);
-            sendButton.setEnabled(false);
+            sendButton.setEnabled(false);otoButton.setEnabled(false);
             break;
         case Connected:
             statusText.setText(getString(R.string.conn_status_text_connected_to, arg));
             inputText.setEnabled(true);
-            sendButton.setEnabled(true);
+            sendButton.setEnabled(true);otoButton.setEnabled(true);
             soundPool.play(sound_connected, 1.0f, 1.0f, 0, 0, 1);
             break;
         case Waiting:
             statusText.setText(R.string.conn_status_text_waiting_for_connection);
             inputText.setEnabled(false);
-            sendButton.setEnabled(false);
+            sendButton.setEnabled(false);otoButton.setEnabled(false);
             break;
         }
         invalidateOptionsMenu();
@@ -692,6 +721,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void showMessage(ChatMessage message) {
         chatLogAdapter.add(message);
+        if(message.toString().equals("1oto"))
+            soundPool.play(sound_oto, 1.0f, 1.0f, 0, 0, 1);
         chatLogAdapter.notifyDataSetChanged();
         chatLogView.smoothScrollToPosition(chatLogAdapter.getCount());
     }
